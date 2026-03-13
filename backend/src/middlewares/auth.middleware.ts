@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { verifyToken } from '../utils/jwt.util.js';
 
 export const authMiddleware = (req: Request, _res: Response, next: NextFunction): void => {
@@ -6,7 +7,8 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
     const header = req.headers.authorization;
 
     if (!header?.startsWith('Bearer ')) {
-      throw Object.assign(new Error('Token no proporcionado'), { statusCode: 401 });
+      next(Object.assign(new Error('Token no proporcionado'), { statusCode: 401 }));
+      return;
     }
 
     const token = header.replace('Bearer ', '').trim();
@@ -20,6 +22,16 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
 
     next();
   } catch (error) {
-    next(Object.assign(new Error('Token inválido'), { statusCode: 401 }));
+    if (error instanceof jwt.TokenExpiredError) {
+      next(Object.assign(new Error('Token expirado'), { statusCode: 401 }));
+      return;
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      next(Object.assign(new Error('Token inválido'), { statusCode: 401 }));
+      return;
+    }
+
+    next(Object.assign(new Error('No autenticado'), { statusCode: 401 }));
   }
 };

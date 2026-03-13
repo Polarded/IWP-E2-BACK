@@ -9,26 +9,43 @@ const fetchSerpApi = async (params: Record<string, string>): Promise<unknown> =>
   });
 
   const response = await fetch(`${SERP_API_URL}?${searchParams.toString()}`);
+  const payload = (await response.json().catch(() => null)) as Record<string, unknown> | null;
 
   if (!response.ok) {
-    throw Object.assign(new Error('Error al consultar SerpApi'), { statusCode: response.status });
+    const providerMessage =
+      (typeof payload?.error === 'string' && payload.error) ||
+      (typeof payload?.message === 'string' && payload.message) ||
+      'Error al consultar SerpApi';
+
+    throw Object.assign(new Error(providerMessage), { statusCode: response.status });
   }
 
-  return response.json();
+  return payload;
 };
 
 export const searchFlightsService = async (
   origin: string,
   destination: string,
-  outboundDate: string
+  outboundDate: string,
+  returnDate?: string
 ): Promise<unknown> => {
-  return fetchSerpApi({
+  const params: Record<string, string> = {
     engine: 'google_flights',
     departure_id: origin,
     arrival_id: destination,
     outbound_date: outboundDate,
     hl: 'es'
-  });
+  };
+
+  if (returnDate) {
+    params.return_date = returnDate;
+    params.type = '1';
+  } else {
+    // SerpApi defaults to round-trip if type is omitted.
+    params.type = '2';
+  }
+
+  return fetchSerpApi(params);
 };
 
 export const searchHotelsService = async (

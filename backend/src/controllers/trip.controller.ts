@@ -3,7 +3,7 @@ import { createTripService, listTripsService, updateTripStatusService } from '..
 import type { TripStatus } from '../interfaces/trip.interface.js';
 
 export const createTripController = (req: Request, res: Response, next: NextFunction): void => {
-  try {
+  (async () => {
     if (!req.user) {
       throw Object.assign(new Error('No autenticado'), { statusCode: 401 });
     }
@@ -15,7 +15,7 @@ export const createTripController = (req: Request, res: Response, next: NextFunc
       endDate: string;
     };
 
-    const trip = createTripService({
+    const trip = await createTripService({
       requesterId: req.user.id,
       destination,
       reason,
@@ -24,22 +24,26 @@ export const createTripController = (req: Request, res: Response, next: NextFunc
     });
 
     res.status(201).json({ ok: true, data: trip });
-  } catch (error) {
-    next(error);
-  }
+  })().catch(next);
 };
 
-export const listTripsController = (_req: Request, res: Response, next: NextFunction): void => {
-  try {
-    const trips = listTripsService();
+export const listTripsController = (req: Request, res: Response, next: NextFunction): void => {
+  (async () => {
+    if (!req.user) {
+      throw Object.assign(new Error('No autenticado'), { statusCode: 401 });
+    }
+
+    const trips = await listTripsService({
+      userId: req.user.id,
+      role: req.user.role
+    });
+
     res.status(200).json({ ok: true, data: trips });
-  } catch (error) {
-    next(error);
-  }
+  })().catch(next);
 };
 
 export const updateTripStatusController = (req: Request, res: Response, next: NextFunction): void => {
-  try {
+  (async () => {
     if (!req.user) {
       throw Object.assign(new Error('No autenticado'), { statusCode: 401 });
     }
@@ -50,7 +54,7 @@ export const updateTripStatusController = (req: Request, res: Response, next: Ne
       comment?: string;
     };
 
-    const trip = updateTripStatusService({
+    const trip = await updateTripStatusService({
       tripId,
       role: req.user.role,
       nextStatus: status,
@@ -58,7 +62,5 @@ export const updateTripStatusController = (req: Request, res: Response, next: Ne
     });
 
     res.status(200).json({ ok: true, data: trip });
-  } catch (error) {
-    next(error);
-  }
+  })().catch(next);
 };
