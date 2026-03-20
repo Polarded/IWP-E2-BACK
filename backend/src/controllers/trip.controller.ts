@@ -16,12 +16,18 @@ export const createTripController = (req: Request, res: Response, next: NextFunc
       reason: string;
       startDate: string;
       endDate: string;
+      preferencesComment?: string;
     };
+    const { preferencesComment } = req.body as { preferencesComment?: string };
+
+    const fullReason = preferencesComment?.trim()
+      ? `${reason}\n\nPreferencias: ${preferencesComment.trim()}`
+      : reason;
 
     const trip = await createTripService({
       requesterId: user.id,
       destination,
-      reason,
+      reason: fullReason,
       startDate,
       endDate
     });
