@@ -24,8 +24,27 @@ const getFromNumber = (): string => env.TWILIO_WHATSAPP_FROM ?? 'whatsapp:+14155
 const normalizeWhatsAppNumber = (value: string): string => {
   const trimmed = value.trim();
   if (!trimmed) return '';
-  if (trimmed.startsWith('whatsapp:')) return trimmed;
-  return `whatsapp:${trimmed}`;
+
+  const withoutPrefix = trimmed.startsWith('whatsapp:')
+    ? trimmed.slice('whatsapp:'.length)
+    : trimmed;
+
+  const digitsOnly = withoutPrefix.replace(/\D/g, '');
+
+  if (digitsOnly.length === 10) {
+    // Assume MX local mobile number when 10 digits are provided.
+    return `whatsapp:+52${digitsOnly}`;
+  }
+
+  if (withoutPrefix.startsWith('+')) {
+    return `whatsapp:${withoutPrefix}`;
+  }
+
+  if (digitsOnly.length > 0) {
+    return `whatsapp:+${digitsOnly}`;
+  }
+
+  return '';
 };
 
 const getRecipientsFromEnv = (): string[] => {

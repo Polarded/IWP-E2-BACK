@@ -3,5 +3,6 @@ export interface Expense {
   tripId: string;
   description: string;
   amount: number;
+  ticketImageUrl?: string;
   createdAt: string;
 }
